@@ -3,4 +3,3 @@ problems.db
 problems.db-shm
 problems.db-wal
 seed.sql
-seed.*.sql
