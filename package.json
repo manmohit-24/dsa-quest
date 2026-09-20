@@ -6,9 +6,11 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "snapshot": "node snapshot.js",
+    "snapshot:backup": "node snapshot.js --backup",
+    "snapshot:dry": "node snapshot.js --dry-run"
   },
-  "keywords": [],
   "author": "Manmohit Singh",
   "license": "ISC",
   "dependencies": {

@@ -15,11 +15,14 @@ app.use(express.static(path.join(__dirname, "static")));
 // ── Tracker API ───────────────────────────────────────────────
 
 app.get("/api/sheets", (req, res) => {
-  res.json(db.prepare("SELECT * FROM sheets ORDER BY id").all());
+  const sheets = db.prepare("SELECT * FROM sheets ORDER BY id").all();
+
+  res.json(sheets);
 });
 
 app.get("/api/sheets/:id", (req, res) => {
   const sheetId = parseInt(req.params.id);
+
   const sheet = db.prepare("SELECT * FROM sheets WHERE id = ?").get(sheetId);
 
   if (!sheet) {
@@ -55,7 +58,7 @@ app.get("/api/sheets/:id", (req, res) => {
           JOIN problems p ON p.id = sp.problem_id
           WHERE sp.section_id = ?
           ORDER BY sp.order_idx
-          `,
+        `,
         )
         .all(section.id);
 
@@ -72,40 +75,57 @@ app.post("/api/toggle", (req, res) => {
   const { sp_id, done } = req.body;
 
   if (sp_id == null || done == null) {
-    return res.status(400).json({ error: "Missing fields" });
+    return res.status(400).json({
+      error: "Missing fields",
+    });
   }
 
   db.prepare(
-    "UPDATE sheet_problems SET done = ?, solved_at = ? WHERE id = ?",
+    `
+    UPDATE sheet_problems
+    SET done = ?, solved_at = ?
+    WHERE id = ?
+  `,
   ).run(done ? 1 : 0, done ? new Date().toISOString() : null, sp_id);
 
   res.json({ ok: true });
 });
 
-// ── Admin API — Sheets ────────────────────────────────────────
+// ── Admin API — Sheets ───────────────────────────────────────
 
 app.post("/api/admin/sheets", (req, res) => {
   const { name, description } = req.body;
 
   if (!name) {
-    return res.status(400).json({ error: "name required" });
+    return res.status(400).json({
+      error: "name required",
+    });
   }
 
-  const r = db
-    .prepare("INSERT INTO sheets (name, description) VALUES (?, ?)")
+  const result = db
+    .prepare(
+      `
+      INSERT INTO sheets (name, description)
+      VALUES (?, ?)
+    `,
+    )
     .run(name, description || "");
 
-  res.json({ id: r.lastInsertRowid });
+  res.json({
+    id: result.lastInsertRowid,
+  });
 });
 
 app.put("/api/admin/sheets/:id", (req, res) => {
   const { name, description } = req.body;
 
-  db.prepare("UPDATE sheets SET name = ?, description = ? WHERE id = ?").run(
-    name,
-    description || "",
-    req.params.id,
-  );
+  db.prepare(
+    `
+    UPDATE sheets
+    SET name = ?, description = ?
+    WHERE id = ?
+  `,
+  ).run(name, description || "", req.params.id);
 
   res.json({ ok: true });
 });
@@ -119,42 +139,56 @@ app.delete("/api/admin/sheets/:id", (req, res) => {
 // ── Admin API — Phases ────────────────────────────────────────
 
 app.get("/api/admin/sheets/:id/phases", (req, res) => {
-  res.json(
-    db
-      .prepare("SELECT * FROM phases WHERE sheet_id = ? ORDER BY order_idx")
-      .all(req.params.id),
-  );
+  const phases = db
+    .prepare("SELECT * FROM phases WHERE sheet_id = ? ORDER BY order_idx")
+    .all(req.params.id);
+
+  res.json(phases);
 });
 
 app.post("/api/admin/phases", (req, res) => {
   const { sheet_id, title, badge, badge_type, order_idx } = req.body;
 
   if (!sheet_id || !title) {
-    return res.status(400).json({ error: "sheet_id and title required" });
+    return res.status(400).json({
+      error: "sheet_id and title required",
+    });
   }
 
-  const maxOrder =
-    db
-      .prepare("SELECT MAX(order_idx) as m FROM phases WHERE sheet_id = ?")
-      .get(sheet_id).m || 0;
-
-  const r = db
+  const { m: maxOrder } = db
     .prepare(
       `
-      INSERT INTO phases
-        (sheet_id, title, badge, badge_type, order_idx)
+      SELECT MAX(order_idx) AS m
+      FROM phases
+      WHERE sheet_id = ?
+    `,
+    )
+    .get(sheet_id);
+
+  const result = db
+    .prepare(
+      `
+      INSERT INTO phases (
+        sheet_id,
+        title,
+        badge,
+        badge_type,
+        order_idx
+      )
       VALUES (?, ?, ?, ?, ?)
-      `,
+    `,
     )
     .run(
       sheet_id,
       title,
       badge || "",
       badge_type || "accent",
-      order_idx ?? maxOrder + 1,
+      order_idx ?? (maxOrder || 0) + 1,
     );
 
-  res.json({ id: r.lastInsertRowid });
+  res.json({
+    id: result.lastInsertRowid,
+  });
 });
 
 app.put("/api/admin/phases/:id", (req, res) => {
@@ -165,7 +199,7 @@ app.put("/api/admin/phases/:id", (req, res) => {
     UPDATE phases
     SET title = ?, badge = ?, badge_type = ?
     WHERE id = ?
-    `,
+  `,
   ).run(title, badge || "", badge_type || "accent", req.params.id);
 
   res.json({ ok: true });
@@ -180,36 +214,57 @@ app.delete("/api/admin/phases/:id", (req, res) => {
 // ── Admin API — Sections ──────────────────────────────────────
 
 app.get("/api/admin/phases/:id/sections", (req, res) => {
-  res.json(
-    db
-      .prepare("SELECT * FROM sections WHERE phase_id = ? ORDER BY order_idx")
-      .all(req.params.id),
-  );
+  const sections = db
+    .prepare(
+      `
+      SELECT *
+      FROM sections
+      WHERE phase_id = ?
+      ORDER BY order_idx
+    `,
+    )
+    .all(req.params.id);
+
+  res.json(sections);
 });
 
 app.post("/api/admin/sections", (req, res) => {
   const { phase_id, title, tag, tag_type } = req.body;
 
   if (!phase_id || !title) {
-    return res.status(400).json({ error: "phase_id and title required" });
+    return res.status(400).json({
+      error: "phase_id and title required",
+    });
   }
 
-  const maxOrder =
-    db
-      .prepare("SELECT MAX(order_idx) as m FROM sections WHERE phase_id = ?")
-      .get(phase_id).m || 0;
-
-  const r = db
+  const { m: maxOrder } = db
     .prepare(
       `
-      INSERT INTO sections
-        (phase_id, title, tag, tag_type, order_idx)
-      VALUES (?, ?, ?, ?, ?)
-      `,
+      SELECT MAX(order_idx) AS m
+      FROM sections
+      WHERE phase_id = ?
+    `,
     )
-    .run(phase_id, title, tag || "", tag_type || "imp", maxOrder + 1);
+    .get(phase_id);
 
-  res.json({ id: r.lastInsertRowid });
+  const result = db
+    .prepare(
+      `
+      INSERT INTO sections (
+        phase_id,
+        title,
+        tag,
+        tag_type,
+        order_idx
+      )
+      VALUES (?, ?, ?, ?, ?)
+    `,
+    )
+    .run(phase_id, title, tag || "", tag_type || "imp", (maxOrder || 0) + 1);
+
+  res.json({
+    id: result.lastInsertRowid,
+  });
 });
 
 app.put("/api/admin/sections/:id", (req, res) => {
@@ -220,7 +275,7 @@ app.put("/api/admin/sections/:id", (req, res) => {
     UPDATE sections
     SET title = ?, tag = ?, tag_type = ?
     WHERE id = ?
-    `,
+  `,
   ).run(title, tag || "", tag_type || "imp", req.params.id);
 
   res.json({ ok: true });
@@ -232,14 +287,21 @@ app.delete("/api/admin/sections/:id", (req, res) => {
   res.json({ ok: true });
 });
 
-// ── Admin API — Problems (global) ─────────────────────────────
+// ── Admin API — Problems ──────────────────────────────────────
 
 app.get("/api/admin/problems", (req, res) => {
   const q = req.query.q || "";
 
   const problems = q
     ? db
-        .prepare("SELECT * FROM problems WHERE name LIKE ? ORDER BY name")
+        .prepare(
+          `
+          SELECT *
+          FROM problems
+          WHERE name LIKE ?
+          ORDER BY name
+        `,
+        )
         .all(`%${q}%`)
     : db.prepare("SELECT * FROM problems ORDER BY name").all();
 
@@ -250,16 +312,23 @@ app.post("/api/admin/problems", (req, res) => {
   const { name, difficulty, url, platform, notes } = req.body;
 
   if (!name) {
-    return res.status(400).json({ error: "name required" });
+    return res.status(400).json({
+      error: "name required",
+    });
   }
 
-  const r = db
+  const result = db
     .prepare(
       `
-      INSERT INTO problems
-        (name, difficulty, url, platform, notes)
+      INSERT INTO problems (
+        name,
+        difficulty,
+        url,
+        platform,
+        notes
+      )
       VALUES (?, ?, ?, ?, ?)
-      `,
+    `,
     )
     .run(
       name,
@@ -269,7 +338,9 @@ app.post("/api/admin/problems", (req, res) => {
       notes || "",
     );
 
-  res.json({ id: r.lastInsertRowid });
+  res.json({
+    id: result.lastInsertRowid,
+  });
 });
 
 app.put("/api/admin/problems/:id", (req, res) => {
@@ -285,7 +356,7 @@ app.put("/api/admin/problems/:id", (req, res) => {
       platform = ?,
       notes = ?
     WHERE id = ?
-    `,
+  `,
   ).run(
     name,
     difficulty,
@@ -304,41 +375,46 @@ app.delete("/api/admin/problems/:id", (req, res) => {
   res.json({ ok: true });
 });
 
-// ── Admin API — Link/Unlink problems to sections ──────────────
+// ── Admin API — Link / Unlink Problems ────────────────────────
 
 app.post("/api/admin/link", (req, res) => {
   const { section_id, problem_id, priority } = req.body;
 
   if (!section_id || !problem_id) {
-    return res
-      .status(400)
-      .json({ error: "section_id and problem_id required" });
+    return res.status(400).json({
+      error: "section_id and problem_id required",
+    });
   }
 
-  const maxOrder =
-    db
-      .prepare(
-        `
-        SELECT MAX(order_idx) as m
-        FROM sheet_problems
-        WHERE section_id = ?
-        `,
-      )
-      .get(section_id).m || 0;
+  const { m: maxOrder } = db
+    .prepare(
+      `
+      SELECT MAX(order_idx) AS m
+      FROM sheet_problems
+      WHERE section_id = ?
+    `,
+    )
+    .get(section_id);
 
   try {
-    const r = db
+    const result = db
       .prepare(
         `
-        INSERT INTO sheet_problems
-          (section_id, problem_id, priority, order_idx)
+        INSERT INTO sheet_problems (
+          section_id,
+          problem_id,
+          priority,
+          order_idx
+        )
         VALUES (?, ?, ?, ?)
-        `,
+      `,
       )
-      .run(section_id, problem_id, priority || 2, maxOrder + 1);
+      .run(section_id, problem_id, priority || 2, (maxOrder || 0) + 1);
 
-    res.json({ id: r.lastInsertRowid });
-  } catch (e) {
+    res.json({
+      id: result.lastInsertRowid,
+    });
+  } catch (error) {
     res.status(409).json({
       error: "Problem already in this section",
     });
@@ -348,10 +424,13 @@ app.post("/api/admin/link", (req, res) => {
 app.put("/api/admin/link/:sp_id", (req, res) => {
   const { priority } = req.body;
 
-  db.prepare("UPDATE sheet_problems SET priority = ? WHERE id = ?").run(
-    priority,
-    req.params.sp_id,
-  );
+  db.prepare(
+    `
+    UPDATE sheet_problems
+    SET priority = ?
+    WHERE id = ?
+  `,
+  ).run(priority, req.params.sp_id);
 
   res.json({ ok: true });
 });
@@ -362,15 +441,15 @@ app.delete("/api/admin/link/:sp_id", (req, res) => {
   res.json({ ok: true });
 });
 
-// ── Serve admin page ──────────────────────────────────────────
+// ── Serve Admin Page ──────────────────────────────────────────
 
 app.get("/admin", (req, res) => {
   res.sendFile(path.join(__dirname, "static", "admin.html"));
 });
 
-// ── Start server ──────────────────────────────────────────────
+// ── Start Server ──────────────────────────────────────────────
 
 app.listen(PORT, () => {
-  console.log(`\n🚀 DSA Tracker  →  http://localhost:${PORT}`);
-  console.log(`🔧 Admin Panel  →  http://localhost:${PORT}/admin\n`);
+  console.log(`\n🚀 DSA Tracker → http://localhost:${PORT}`);
+  console.log(`🔧 Admin Panel → http://localhost:${PORT}/admin\n`);
 });
