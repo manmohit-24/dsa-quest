@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DSA Tracker — Admin</title>
+<link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div class="header-left">
+      <h1>Admin Panel</h1>
+      <p>Manage sheets, phases, sections and problems.</p>
+    </div>
+    <div class="header-right">
+      <a href="/" class="btn btn-ghost">← Tracker</a>
+    </div>
+  </div>
+
+  <!-- TAB NAV -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="showTab('sheets')">Sheets</button>
+    <button class="tab-btn" onclick="showTab('phases')">Phases & Sections</button>
+    <button class="tab-btn" onclick="showTab('problems')">Problems</button>
+    <button class="tab-btn" onclick="showTab('link')">Link Problems</button>
+  </div>
+
+  <!-- ── TAB: SHEETS ── -->
+  <div id="tab-sheets" class="tab active">
+    <div class="section-card">
+      <h2>Create Sheet</h2>
+      <div class="form-row">
+        <input id="sheet-name" class="input" placeholder="Sheet name e.g. Striver Gap Sheet" />
+        <input id="sheet-desc" class="input" placeholder="Description (optional)" />
+        <button class="btn btn-primary" onclick="createSheet()">Create</button>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>All Sheets</h2>
+      <div id="sheets-list"></div>
+    </div>
+  </div>
+
+  <!-- ── TAB: PHASES & SECTIONS ── -->
+  <div id="tab-phases" class="tab">
+    <div class="section-card">
+      <h2>Add Phase</h2>
+      <div class="form-row">
+        <select id="phase-sheet" class="input"></select>
+        <input id="phase-title" class="input" placeholder="Phase title e.g. Phase 1 — JTG Core" />
+        <input id="phase-badge" class="input" placeholder="Badge text e.g. JTG Priority" />
+        <select id="phase-badge-type" class="input">
+          <option value="danger">danger (red)</option>
+          <option value="accent" selected>accent (blue)</option>
+          <option value="success">success (green)</option>
+        </select>
+        <button class="btn btn-primary" onclick="createPhase()">Add Phase</button>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>Add Section</h2>
+      <div class="form-row">
+        <select id="section-sheet" class="input" onchange="loadPhasesForSection()"></select>
+        <select id="section-phase" class="input"></select>
+        <input id="section-title" class="input" placeholder="Section title e.g. Trees" />
+        <input id="section-tag" class="input" placeholder="Tag text e.g. JTG #1 topic" />
+        <select id="section-tag-type" class="input">
+          <option value="jtg">jtg (red)</option>
+          <option value="imp" selected>imp (orange)</option>
+          <option value="ext">ext (green)</option>
+        </select>
+        <button class="btn btn-primary" onclick="createSection()">Add Section</button>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>Browse Phases & Sections</h2>
+      <div class="form-row">
+        <select id="browse-sheet" class="input" onchange="loadBrowse()"></select>
+      </div>
+      <div id="browse-tree"></div>
+    </div>
+  </div>
+
+  <!-- ── TAB: PROBLEMS ── -->
+  <div id="tab-problems" class="tab">
+    <div class="section-card">
+      <h2>Create Problem</h2>
+      <div class="form-row">
+        <input id="prob-name" class="input" placeholder="Problem name" />
+        <select id="prob-difficulty" class="input">
+          <option value="easy">Easy</option>
+          <option value="medium" selected>Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+        <select id="prob-platform" class="input">
+          <option value="leetcode">LeetCode</option>
+          <option value="codeforces">Codeforces</option>
+          <option value="gfg">GFG</option>
+          <option value="custom">Custom</option>
+        </select>
+        <input id="prob-url" class="input" placeholder="URL (optional)" />
+        <input id="prob-notes" class="input" placeholder="Notes (optional)" />
+        <button class="btn btn-primary" onclick="createProblem()">Create</button>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>All Problems</h2>
+      <div class="form-row">
+        <input id="prob-search" class="input" placeholder="Search problems..." oninput="searchProblems()" />
+      </div>
+      <div id="problems-list"></div>
+    </div>
+  </div>
+
+  <!-- ── TAB: LINK ── -->
+  <div id="tab-link" class="tab">
+    <div class="section-card">
+      <h2>Link Problem to Section</h2>
+      <p class="hint">Search for an existing problem and add it to any section with a priority.</p>
+      <div class="form-row">
+        <select id="link-sheet" class="input" onchange="loadPhasesForLink()"></select>
+        <select id="link-phase" class="input" onchange="loadSectionsForLink()"></select>
+        <select id="link-section" class="input"></select>
+      </div>
+      <div class="form-row">
+        <input id="link-search" class="input" placeholder="Search problem to add..." oninput="searchLink()" />
+        <select id="link-priority" class="input">
+          <option value="1">Priority 1 — Must</option>
+          <option value="2" selected>Priority 2 — Important</option>
+          <option value="3">Priority 3 — Good to have</option>
+        </select>
+      </div>
+      <div id="link-results"></div>
+    </div>
+
+    <div class="section-card">
+      <h2>Problems in Section</h2>
+      <div class="form-row">
+        <select id="view-sheet" class="input" onchange="loadPhasesForView()"></select>
+        <select id="view-phase" class="input" onchange="loadSectionsForView()"></select>
+        <select id="view-section" class="input" onchange="loadSectionProblems()"></select>
+      </div>
+      <div id="section-problems"></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>
