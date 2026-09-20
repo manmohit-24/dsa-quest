@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DSA Tracker</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div class="header-left">
+      <h1>DSA Tracker</h1>
+      <p>Platform-agnostic. Multi-sheet. Source lives in <code>seed.sql</code>.</p>
+    </div>
+    <div class="header-right">
+      <select id="sheet-select" onchange="loadSheet(this.value)"></select>
+    </div>
+  </div>
+
+  <div class="stats-row" id="stats">
+    <div class="stat"><div class="stat-num">—</div><div class="stat-label">Problems done</div></div>
+    <div class="stat"><div class="stat-num">—</div><div class="stat-label">Overall</div></div>
+    <div class="stat"><div class="stat-num">—</div><div class="stat-label">Priority 1 done</div></div>
+    <div class="stat"><div class="stat-num">—</div><div class="stat-label">Remaining</div></div>
+  </div>
+
+  <div class="filter-row">
+    <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+    <button class="filter-btn" onclick="setFilter('pending', this)">Pending</button>
+    <button class="filter-btn" onclick="setFilter('done', this)">Done</button>
+    <button class="filter-btn" onclick="setFilter('p1', this)">Priority 1</button>
+    <button class="filter-btn" onclick="setFilter('p2', this)">Priority 2</button>
+    <button class="filter-btn" onclick="setFilter('p3', this)">Priority 3</button>
+  </div>
+
+  <div id="phases"></div>
+
+</div>
+
+<script src="tracker.js"></script>
+</body>
+</html>
