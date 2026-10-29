@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens — ported 1:1 from the original style.css.
+ * Components use semantic utilities (bg-surface, text-muted, border-line…)
+ * so re-theming means editing only this block.
+ */
+:root {
+  color-scheme: light dark;
+
+  --background: #ffffff;
+  --surface: #f5f5f3;
+  --surface-strong: #efefed;
+  --foreground: #1a1a18;
+  --muted: #5a5a57;
+  --subtle: #9a9a96;
+  --line: rgba(0, 0, 0, 0.08);
+  --line-strong: rgba(0, 0, 0, 0.16);
+
+  --accent: #185fa5;
+  --accent-soft: #e6f0fb;
+  --accent-line: #b5d4f4;
+  --on-accent: #ffffff;
+
+  --danger: #a32d2d;
+  --danger-soft: #fcebeb;
+  --warning: #854f0b;
+  --warning-soft: #faeeda;
+  --success: #3b6d11;
+  --success-soft: #eaf3de;
+  --success-fill: #639922;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #1a1a18;
+    --surface: #222220;
+    --surface-strong: #2a2a28;
+    --foreground: #f0f0ec;
+    --muted: #a0a09c;
+    --subtle: #606060;
+    --line: rgba(255, 255, 255, 0.06);
+    --line-strong: rgba(255, 255, 255, 0.12);
+
+    --accent: #85b7eb;
+    --accent-soft: #0c3a62;
+    --accent-line: #185fa5;
+    --on-accent: #0c3a62;
+
+    --danger: #f09595;
+    --danger-soft: #4a1b0c;
+    --warning: #fac775;
+    --warning-soft: #412402;
+    --success: #97c459;
+    --success-soft: #173404;
+    --success-fill: #639922;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-strong: var(--surface-strong);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-line: var(--accent-line);
+  --color-on-accent: var(--on-accent);
+
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-fill: var(--success-fill);
+
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* The original design uses 0.5px hairline borders. */
+@utility border-hairline {
+  border-width: 0.5px;
+}
+
+@layer base {
+  body {
+    @apply min-h-screen bg-background font-sans text-[15px] leading-relaxed text-foreground;
+  }
+}
